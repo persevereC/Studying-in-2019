@@ -86,17 +86,35 @@
 // }) 
 
 
-const stream = require('stream');
+// const stream = require('stream');
+// class GreenStream extends stream.Writable {
+//   constructor(options) {
+//     super(options);
+//   }
+//   _write(chunk, encoding, cb) {
+//     process.stdout.write(`\u001b[32m${chunk}\u001b[39m`);
+//     cb();
+//   }
+// }
+// process.stdin.pipe(new GreenStream());
 
-class GreenStream extends stream.Writable {
-  constructor(options) {
-    super(options);
-  }
 
-  _write(chunk, encoding, cb) {
-    process.stdout.write(`\u001b[32m${chunk}\u001b[39m`);
-    cb();
-  }
-}
+const assert = require('assert');
+const fs = require('fs');
+const CSVParser = require('./csvparser');
 
-process.stdin.pipe(new GreenStream());
+const parser = new CSVParser();
+const actual = [];
+fs.createReadStream(`${__dirname}/sample.csv`)
+  .pipe(parser);
+process.on('exit', ()=>{
+  actual.push(parser.read());
+  actual.push(parser.read());
+  actual.push(parser.read());
+  const expected = [
+    { name: 'Alex', location: 'UK', role: 'admin' },
+    { name: 'Sam', location: 'France', role: 'user' },
+    { name: 'John', location: 'Canada', role: 'user' },   
+  ];
+  assert.deepEqual(expected, actual);
+})
